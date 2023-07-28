@@ -3,7 +3,12 @@ all:
 
 .PHONY: dev
 dev:
-	IMAGE_LOCAL=$(IMAGE) docker buildx bake --push
+ifneq ($(IMAGE),)
+	$(eval export IMAGE_LOCAL := $(IMAGE))
+	$(eval ARGS := --push)
+endif
+	docker buildx bake --print
+	docker buildx bake $(ARGS)
 
 .PHONY: examples
 examples:

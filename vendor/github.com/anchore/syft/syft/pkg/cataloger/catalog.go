@@ -76,7 +76,14 @@ func runCataloger(cataloger pkg.Cataloger, resolver file.Resolver) (catalogerRes
 	for _, p := range packages {
 		// generate CPEs (note: this is excluded from package ID, so is safe to mutate)
 		// we might have binary classified CPE already with the package so we want to append here
-		p.CPEs = append(p.CPEs, cpe.Generate(p)...)
+
+		dictionaryCPE, ok := cpe.DictionaryFind(p)
+		if ok {
+			log.Debugf("used CPE dictionary to find CPE for %s package %q: %s", p.Type, p.Name, dictionaryCPE.BindToFmtString())
+			p.CPEs = append(p.CPEs, dictionaryCPE)
+		} else {
+			p.CPEs = append(p.CPEs, cpe.Generate(p)...)
+		}
 
 		// if we were not able to identify the language we have an opportunity
 		// to try and get this value from the PURL. Worst case we assert that
@@ -127,10 +134,8 @@ func Catalog(resolver file.Resolver, _ *linux.Release, parallelism int, cataloge
 	discoveredPackages := make(chan int64, nCatalogers)
 
 	waitGroup := sync.WaitGroup{}
-
+	waitGroup.Add(parallelism)
 	for i := 0; i < parallelism; i++ {
-		waitGroup.Add(1)
-
 		go func() {
 			defer waitGroup.Done()
 

@@ -46,11 +46,14 @@ RUN --mount=type=bind,target=. \
     --mount=type=bind,from=version,source=/tmp/.ldflags,target=/tmp/.ldflags \
     --mount=type=cache,target=/root/.cache <<EOT
   set -e
-  xx-go build -trimpath -ldflags "$(cat /tmp/.ldflags)" -o /usr/local/bin/syft-scanner ./cmd/syft-scanner
+  xx-go build -mod=readonly -trimpath -ldflags "$(cat /tmp/.ldflags)" -o /usr/local/bin/syft-scanner ./cmd/syft-scanner
   xx-verify --static /usr/local/bin/syft-scanner
 EOT
 
 FROM scratch
 COPY --from=build /usr/local/bin/syft-scanner /bin/syft-scanner
 ENV LOG_LEVEL="warn"
+# Instruct syft to look for licenses in gomod cache and remote repositories
+ENV SYFT_GOLANG_SEARCH_LOCAL_MOD_CACHE_LICENSES=true
+ENV SYFT_GOLANG_SEARCH_REMOTE_LICENSES=true
 ENTRYPOINT [ "/bin/syft-scanner" ]

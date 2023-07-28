@@ -1,0 +1,10 @@
+**
+
+!.git
+!.gitignore
+!cmd
+!examples
+!hack
+!internal
+!version
+!go.*
